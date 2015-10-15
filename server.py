@@ -1,4 +1,4 @@
-
+#!/usr/bin/python2
 
 from twisted.internet.protocol import Factory
 from twisted.protocols.basic import LineReceiver
@@ -8,7 +8,7 @@ import ciphers as cs
 from ciphers import *
 
 class Weldrod(LineReceiver):
-	
+
     def __init__(self):
         self.settings = {}
         self.state = "PROMPT"
@@ -17,7 +17,9 @@ class Weldrod(LineReceiver):
         self.response_type = 'normal'
         self.ciphers = self.getCiphers()
         self.lastquery = ''
-        self.params = {}
+        self.params = {
+                'hex_mode' : "false",
+                }
 
     def connectionMade(self):
         print "Connection made from %s" %(self.transport.client[0])
@@ -44,7 +46,8 @@ class Weldrod(LineReceiver):
             except IndexError:
                 resp = "Why u do tis??"
             except KeyError:
-                resp = "Pacha Boodham! I don't understand what you are saying. Send 'help' for help"
+                resp = "Pacha Boodham! I don't understand what you are"\
+		       " saying. Send 'help' for help"
 
         elif self.state.startswith('INPUT'):
             self.lastquery = data
@@ -86,7 +89,22 @@ class Weldrod(LineReceiver):
 
 
     def HANDLE_encrypt(self, data):
-        pass
+        try:
+            pt = self.params['plaintext']
+            key = self.params['passkey']
+
+            if self.params['hex_mode'] == "true":
+                pt = pt.decode("hex")
+                key = key.decode("hex")
+        except KeyError as e:
+            return "Parameter %s is not set" %(e)
+
+        ciphertext = self.cipher.encrypt(pt, key)
+
+        if self.params['hex_mode'] == "true":
+            return ciphertext
+        else:
+            return ciphertext.encode('hex')
 
     def HANDLE_decrypt(self, data):
         pass
@@ -106,11 +124,11 @@ class Weldrod(LineReceiver):
 
         if len(args) == 1:
             for prop in self.params:
-                resp += "%s => %s\n" %(prop, self.params[prop])
+                resp += "%s\t=>\t%s\n" %(prop, self.params[prop])
             return resp
         elif len(args) == 2:
             try:
-                resp += "%s => %s\n" %(args[1], self.params[args[1]])
+                resp += "%s\t=>\t%s\n" %(args[1], self.params[args[1]])
             except KeyError:
                 resp = "%s is not set" %(args[1])
             return resp
@@ -118,9 +136,16 @@ class Weldrod(LineReceiver):
             return "Invalid Syntax, girl."
 
     def HANDLE_menu_input(self):
-        index = int(self.lastquery)
+        index = int(self.lastquery) - 1
         cipher = self.ciphers[index]
-        self.cipher = cipher
+
+        try:
+	    cipher_class = cipher.Start()
+            self.cipher = cipher_class.mainclass()
+	except Exception as e:
+            print e
+	    return "Uh oh! Something went wrong.."
+
         self.params['cipher'] = cipher
         self.prompt = "%s | %s" %(cipher.__name__, self.prompt)
 
@@ -132,7 +157,7 @@ class Weldrod(LineReceiver):
                 pass
         resp += "\n"
         return resp
-    
+
     #
     #Common methods
     #
