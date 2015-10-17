@@ -17,9 +17,8 @@ class Weldrod(LineReceiver):
         self.response_type = 'normal'
         self.ciphers = self.getCiphers()
         self.lastquery = ''
-        self.params = {
-                'hex_mode' : "false",
-                }
+        self.params = { }
+        self.settings = WeldrodSession()
 
     def connectionMade(self):
         print "Connection made from %s" %(self.transport.client[0])
@@ -93,21 +92,36 @@ class Weldrod(LineReceiver):
             pt = self.params['plaintext']
             key = self.params['passkey']
 
-            if self.params['hex_mode'] == "true":
+            if self.settings.get('hex_mode.pt') == "true":
                 pt = pt.decode("hex")
+            
+            if self.settings.get('hex_mode.key') == "true":
                 key = key.decode("hex")
         except KeyError as e:
             return "Parameter %s is not set" %(e)
 
         ciphertext = self.cipher.encrypt(pt, key)
 
-        if self.params['hex_mode'] == "true":
-            return ciphertext
-        else:
+        if self.settings.get('hex_mode.ct') == "true":
             return ciphertext.encode('hex')
+        else:
+            return ciphertext
 
     def HANDLE_decrypt(self, data):
-        pass
+        try:
+            ct = self.params['ciphertext']
+            key = self.params['passkey']
+
+            if self.params['hex_mode'] == "true":
+                ct = ct.decode("hex")
+                key = key.decode("hex")
+        except KeyError as e:
+            return "Parameter %s is not set" %(e)
+
+        plaintext = self.cipher.decrypt(ct, key)
+        print plaintext
+        return unicode(plaintext, 'utf-8')
+
 
     def HANDLE_set(self, data):
         args = data.strip().split()
@@ -146,7 +160,6 @@ class Weldrod(LineReceiver):
             print e
 	    return "Uh oh! Something went wrong.."
 
-        self.params['cipher'] = cipher
         self.prompt = "%s | %s" %(cipher.__name__, self.prompt)
 
         resp = "Chosen cipher successfully!\n\n"
@@ -167,6 +180,71 @@ class Weldrod(LineReceiver):
         return [globals()[bar] for bar in foo]
 
 
+class WeldrodSession:
+	
+	#Set the default session settings
+	def __init__(self):
+		self.storage = {}
+		self.storage['hex_mode'] = {}
+		self.storage['hex_mode']['pt'] = {'d_type' : str, 'value' : "false"}
+		self.storage['hex_mode']['ct'] = {'d_type' : str, 'value' : "true"}
+		self.storage['hex_mode']['key'] = {'d_type' : str, 'value': "true"}
+		
+	def set(self, data):
+		try:
+			update_settings(self, data)
+		except SettingsKeyError:
+			return "Incorrect Settings Key"
+		except IncorrectTypeError:
+			return "Data Type Mismatch"
+	
+	def update_settings(self, data):
+		data = data.strip().split()
+		settings_key, value = data[1], data[2]
+		
+		#Settings key existence check
+		try:
+			key = None
+			for i in settings_key.split("."):
+				key = self.storage[i]
+		except KeyError:
+			raise WeldrodSession.SettingsKeyError()
+		
+		if type(key) != dict:
+			raise WeldrodSession.SettingsKeyError()
+		
+		#TypeCheck
+		try:
+			value = key[d_type](value)
+		except Exception:
+			raise WelrodSession.IncorrectTypeError()
+			
+		#Set the value in the key if everything is okay
+		key['value'] = value
+		
+	def get(self, settings_key):
+		try:
+			key = self.storage
+			for i in settings_key.split("."):
+				key = key[i]
+		except KeyError as e:
+			raise WeldrodSession.SettingsKeyError(e)
+		
+		if type(key) != dict:
+			raise WeldrodSession.SettingsKeyError("Uh uh")
+		
+		return key['value']
+		
+	# 
+	# Exceptions
+	#
+	class SettingsKeyError(Exception):
+		pass
+		
+	class IncorrectTypeError(Exception):
+		pass
+		
+	
 class WeldrodFactory(Factory):
     def buildProtocol(self, addr):
         return Weldrod()
