@@ -31,7 +31,7 @@ If you prefer looking at the sample modules directly and figure it out yourself,
   - comments
 
 So, `metachall` can be defined as
-```
+```python
 metachall = {
         'name'      : 'Bad Ciph',
         'author'    : 'gtux',
@@ -43,7 +43,7 @@ metachall = {
 The cryptosystem is defined in a class (say, `BadCiph`) with both `encrypt` and `decrypt` methods.
 
 For example:
-```
+```python
 class BadCiph:
     def encrypt(self, plaintext, key):
         return plaintext.encode("rot13")
@@ -53,7 +53,7 @@ class BadCiph:
 ```
 
 A class `Start` is defined by the following construct with the property `mainclass` assigned the class name of your cryptosystem. 
-```
+```python
 class Start:
 	def __init__(self):
 	    self.mainclass = BadCiph
