@@ -2,16 +2,16 @@
 metachall = {
         'name'      : 'Ugly Ciph',
         'author'    : 'gtux',
-        'email'     : 'krp@gtux.in',
+        'email'     : '***@gtux.in',
         'web'       : 'https://gtux.in',
         'comments'  : 'Very Simple Ceasar Cipher Implementation',
         }
 
 class Start:
 	def __init__(self):
-	    self.mainclass = CeasarCiph
+	    self.mainclass = UglyCiph
 
-class CeaserCiph:
+class UglyCiph:
     def __init__(self, pkey="dumb"):
         self.pkey = pkey
 

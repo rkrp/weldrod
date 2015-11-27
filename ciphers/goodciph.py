@@ -2,7 +2,7 @@
 metachall = {
         'name'      : 'Good Ciph',
         'author'    : 'gtux',
-        'email'     : 'krp@gtux.in',
+        'email'     : '***@gtux.in',
         'web'       : 'https://gtux.in',
         'comments'  : 'Meh. Nothing much to see here',
         }

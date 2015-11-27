@@ -2,16 +2,16 @@
 metachall = {
         'name'      : 'Bad Ciph',
         'author'    : 'gtux',
-        'email'     : 'krp@gtux.in',
+        'email'     : '***@gtux.in',
         'web'       : 'https://gtux.in',
         'comments'  : 'Meh. Nothing much to see here',
         }
 
 class Start:
 	def __init__(self):
-	    self.mainclass = GoodCiph
+	    self.mainclass = BadCiph
 
-class GoodCiph:
+class BadCiph:
     def __init__(self, pkey="dumb"):
         self.pkey = pkey
 
